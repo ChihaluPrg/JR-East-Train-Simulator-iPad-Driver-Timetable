@@ -1,0 +1,507 @@
+/* 全体のリセットとベーススタイル */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+div {
+    font-weight: bold;
+}
+body {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+#red {
+    color: red;
+}
+
+#tuu,#tuu2,#tuu3,#tuu4,#tuu5,#tuu6,#tuu7,#tuu8,#tuu9 {
+    color: red
+}
+.app-container {
+    max-width: 100%;
+    height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ヘッダースタイル */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, #008000, #006000);
+    color: white;
+    padding: 10px 15px;
+    height: 50px;
+}
+
+header h1 {
+    font-size: 1.2rem;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.menu-button, .dark-mode-toggle {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hamburger-menu {
+    width: 20px;
+    height: 14px;
+    position: relative;
+}
+
+.hamburger-menu::before,
+.hamburger-menu::after,
+.hamburger-menu div {
+    content: '';
+    position: absolute;
+    height: 2px;
+    background-color: white;
+    width: 100%;
+    left: 0;
+}
+
+.hamburger-menu::before {
+    top: 0;
+}
+
+.hamburger-menu div {
+    top: 6px;
+}
+
+.hamburger-menu::after {
+    bottom: 0;
+}
+
+.moon-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+/* メニューナビゲーションスタイル */
+.main-nav {
+    background-color: white;
+    height: 40px;
+    border-bottom: 1px solid #ddd;
+}
+
+.main-nav ul {
+    display: flex;
+    list-style: none;
+    height: 100%;
+}
+
+.main-nav .nav-item {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    border-right: 1px solid #ddd;
+}
+
+.main-nav .nav-item.active {
+    border-bottom: 4px solid #008000;
+}
+
+/* 路線情報スタイル */
+.route-info {
+    display: flex;
+    justify-content: space-between;
+    background-color: white;
+    padding: 5px 10px;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.9rem;
+}
+
+.date-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.operation-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-icon.operation-ended {
+    display: flex;
+    align-items: center;
+    background-color: #008000;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.status-icon.operation-ended::before {
+    content: "⚠";
+    margin-right: 5px;
+    font-size: 1.2em;
+}
+
+.location-toggle {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.location-toggle span {
+    padding: 5px 10px;
+}
+
+.location-toggle .on-label {
+    background-color: white;
+    color: #666;
+}
+
+.location-toggle .off-label.active {
+    background-color: #008000;
+    color: white;
+}
+
+/* 列車情報ヘッダースタイル */
+.train-info-header,
+.train-info-values {
+    display: flex;
+    background-color: #eee;
+    border-bottom: 1px solid #ddd;
+}
+
+.train-info-header .column,
+.train-info-values .column {
+    flex: 1;
+    padding: 5px;
+    text-align: center;
+    border-right: 1px solid #ddd;
+    font-size: 0.8rem;
+}
+
+.train-info-values .train-number {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.train-number .number,
+.train-number .letter {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.train-number .blue {
+    color: blue;
+}
+
+/* 車両数カウントスタイル */
+.train-cars-count {
+    display: flex;
+    background-color: white;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.train-cars-count .count {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.train-cars-count .unit {
+    margin-right: 15px;
+}
+
+.train-cars-count .note {
+    color: #666;
+    margin-right: 10px;
+}
+
+.train-cars-count .additional-info {
+    color: #999;
+}
+
+/* 時刻表ヘッダースタイル */
+.timetable-header {
+    display: flex;
+    background-color: #eee;
+    border-bottom: 1px solid #ddd;
+}
+
+.timetable-header .column {
+    padding: 5px;
+    text-align: center;
+    border-right: 1px solid #ddd;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 運転時分を正方形に変更 */
+.timetable-header .operation-time {
+    width: 40px; /* 固定サイズに変更 */
+    min-width: 40px;
+    height: 40px; /* 高さも同じにして正方形に */
+    aspect-ratio: 1; /* アスペクト比を1:1（正方形）に強制 */
+}
+
+.timetable-header .station-name {
+    width: 15%;
+}
+
+.timetable-header .arrival {
+    width: 10%;
+    background-color: #006000;
+    color: white;
+}
+
+.timetable-header .departure {
+    width: 10%;
+    background-color: #fcf;
+}
+
+.timetable-header .track-info {
+    width: 8%;
+}
+
+.timetable-header .speed-limit {
+    width: 8%;
+}
+
+.timetable-header .remarks {
+    width: calc(31% - 40px + 8%); /* 運転時分のサイズ変更を調整 */
+}
+
+.timetable-header .marker {
+    width: 10%;
+}
+
+/* 時刻表本体スタイル */
+.timetable-container {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+}
+
+.station-row {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    background-color: white;
+    position: relative;
+    margin-bottom: 1px;
+    overflow: hidden;
+}
+
+/* 運転時分の列を正方形に変更 */
+.station-row .operation-time {
+    width: 40px; /* 固定サイズに変更 */
+    min-width: 40px;
+    height: 40px; /* 高さも同じにして正方形に */
+    aspect-ratio: 1; /* アスペクト比を1:1（正方形）に強制 */
+    position: relative;
+    padding: 0; /* パディングを削除して正確な正方形に */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid #ddd; /* 縦線の追加 */
+    text-align: center; /* テキスト中央寄せ */
+}
+
+.station-row .station-name {
+    width: 15%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid #ddd; /* 縦線の追加 */
+    text-align: center; /* テキスト中央寄せ */
+    padding: 0 5px; /* 左右の余白を追加 */
+}
+
+.station-row .arrival {
+    width: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid #ddd; /* 縦線の追加 */
+    text-align: center; /* テキスト中央寄せ */
+}
+
+.station-row .departure {
+    width: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid #ddd; /* 縦線の追加 */
+    text-align: center; /* テキスト中央寄せ */
+}
+
+.station-row .track-info {
+    width: 8%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid #ddd; /* 縦線の追加 */
+    text-align: center; /* テキスト中央寄せ */
+}
+
+.station-row .speed-limit {
+    width: 8%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid #ddd; /* 縦線の追加 */
+    text-align: center; /* テキスト中央寄せ */
+}
+
+.station-row .remarks {
+    width: calc(31% - 40px + 8%); /* 運転時分のサイズ変更を調整 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid #ddd; /* 縦線の追加 */
+    text-align: center; /* テキスト中央寄せ */
+    padding: 0 5px; /* 左右の余白を追加 */
+}
+
+.station-row .marker {
+    width: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center; /* テキスト中央寄せ */
+}
+
+/* 通過した駅のスタイル - 上にスライドしながら消えるアニメーションに変更 */
+@keyframes slideUp {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+        max-height: 100%;
+    }
+    80% {
+        transform: translateY(-20px);
+        opacity: 0;
+        max-height: 100%;
+    }
+    100% {
+        transform: translateY(-20px);
+        opacity: 0;
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+        border: none;
+    }
+}
+
+.station-row.passed {
+    animation: slideUp 1.5s ease-out forwards; /* これをJavaScriptのANIMATION_DURATIONと合わせる */
+    overflow: hidden;
+    transform-origin: top center;
+    position: relative;
+    z-index: 1;
+}
+
+/* 現在位置のスタイル */
+.current-location {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* 現在位置アニメーション用のオーバーレイ */
+.current-location-overlay {
+    position: absolute;
+    width: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* 駅での現在位置表示 - 緑色に変更 */
+.current-operation-time {
+    background-color: rgba(0, 128, 0, 0.7); /* 赤から緑に変更 */
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* 運転時分の正方形表示 - 駅にいる時用 */
+.operation-time-square {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 128, 0, 0.7); /* 赤から緑に変更 */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.5); /* 境界線を追加して視認性を向上 */
+}
+
+/* 駅間の現在位置表示 - 緑色の正方形に変更 */
+.between-stations-marker {
+    width: 36px; /* 運転時分の正方形と同じサイズに統一 */
+    height: 36px; /* 運転時分の正方形と同じサイズに統一 */
+    background-color: #008000; /* 緑色 */
+    position: absolute;
+    left: 2px; /* 左端に配置 */
+    transform: translateY(-50%);
+    z-index: 6; /* 横棒より上に表示 */
+    pointer-events: none; /* クリックイベントを通過させる */
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.5); /* 境界線を追加して視認性を向上 */
+}
+
+/* 駅間の横棒スタイル - 緑色に変更 */
+.station-bar {
+    background-color: rgba(0, 128, 0, 0.7); /* 緑色 */
+    position: absolute;
+    height: 4px; /* 細くする */
+    left: 0;
+    right: 0;
+    z-index: 5; /* 必ず表示されるようz-indexを設定 */
+    width: 100%; /* 明示的に幅を指定 */
+    pointer-events: none; /* クリックイベントを通過させる */
+}
+
+/* サブスクリプトスタイル（時刻の秒数） */
+sub {
+    vertical-align: sub;
+    font-size: 0.7em;
+}
+
+/* フッタースタイル */
+footer {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    text-align: left;
+    font-size: 1rem;
+}
+
+.notice-header {
+    font-weight: bold;
+}
+
