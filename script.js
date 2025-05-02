@@ -134,6 +134,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 効果音を再生する関数
+    function playSound(soundType) {
+        // サウンドタイプによって異なる効果音を再生する
+        const sound = new Audio();
+        
+        switch(soundType) {
+            case 'select-first':
+                sound.src = 'audio.mp3'; // 発車駅選択用の音声ファイル
+                break;
+            case 'select-last':
+                sound.src = 'audio.mp3'; // 終着駅選択用の音声ファイル
+                break;
+            case 'toggle':
+                sound.src = 'audio.mp3'; // 選択解除などの切り替え音
+                break;
+            default:
+                sound.src = 'audio.mp3'; // デフォルトの効果音
+        }
+        
+        // フォールバックとしてブラウザ内蔵の音声合成APIを使用（ファイルがない場合）
+        sound.onerror = function() {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(soundType === 'select-first' ? '始発' : '終着');
+                utterance.lang = 'ja-JP';
+                utterance.volume = 0.5;
+                speechSynthesis.speak(utterance);
+            } else {
+                console.log('サウンドファイルの読み込みに失敗し、音声合成APIもサポートされていません');
+            }
+        };
+        
+        // 音量調整
+        sound.volume = 0.5;
+        
+        // 再生
+        sound.play().catch(e => {
+            console.log('音声再生エラー:', e);
+        });
+    }
+
     // 現在位置の表示を更新する関数
     function updateCurrentLocation() {
         // まず既存のマーカーをすべて削除
@@ -538,6 +578,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+            // 効果音を再生（選択解除）
+            playSound('toggle');
+            
             // 熱海を終着駅に戻す
             const lastStation = stations.find(s => s.id === 22);
             if (lastStation) {
@@ -583,6 +626,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     departureCell.innerHTML = '====';
                 }
             }
+            
+            // 効果音を再生（終着駅選択）
+            playSound('select-last');
         }
 
         // 終着駅以降の駅の表示を更新
@@ -613,6 +659,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+            
+            // 効果音を再生（選択解除）
+            playSound('toggle');
+            
             // 東京駅を始発駅に戻す
             const firstStation = stations.find(s => s.id === 1);
             if (firstStation) {
@@ -657,6 +707,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     arrivalCell.innerHTML = '';
                 }
             }
+            
+            // 効果音を再生（始発駅選択）
+            playSound('select-first');
         }
 
         // 駅の表示を更新
