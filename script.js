@@ -93,6 +93,47 @@ document.addEventListener('DOMContentLoaded', function() {
         return departureTime - arrivalTime;
     }
 
+    // 通過駅の通過時刻を計算する関数
+    function calculatePassingTime(fromStation, passingStation, toStation) {
+        // 前の駅の発車時刻と次の駅の到着時刻を取得
+        const departureTime = timeToMs(fromStation.departure);
+        let arrivalTime = null;
+        
+        // 通過駅の次の駅の到着時刻を取得
+        if (toStation && toStation.arrival) {
+            arrivalTime = timeToMs(toStation.arrival);
+        } else {
+            // 次の駅の到着時刻が不明な場合、通過駅の次の次の駅を探す
+            for (let i = stations.indexOf(passingStation) + 1; i < stations.length; i++) {
+                if (stations[i] && stations[i].arrival) {
+                    arrivalTime = timeToMs(stations[i].arrival);
+                    break;
+                }
+            }
+        }
+        
+        if (!departureTime || !arrivalTime) {
+            return null; // 計算に必要な時刻が不足している場合
+        }
+        
+        // 通過駅までの距離比率（単純に駅間を等間隔と仮定）
+        const ratio = 0.5; // 中間点として計算
+        
+        // 通過時刻を計算
+        let passingTimeMs = departureTime + (arrivalTime - departureTime) * ratio;
+        
+        // 通過時刻をフォーマット
+        const hours = Math.floor(passingTimeMs / 3600000);
+        const minutes = Math.floor((passingTimeMs % 3600000) / 60000);
+        const seconds = Math.floor((passingTimeMs % 60000) / 1000);
+        
+        if (seconds > 0) {
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        } else {
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+    }
+
     // 現在位置の表示を更新する関数
     function updateCurrentLocation() {
         // まず既存のマーカーをすべて削除
@@ -248,6 +289,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (nextStation.isLast) {
                             showContinuationDialog();
                             return;
+                        }
+                        
+                        // 通過駅の通過時刻を計算
+                        const nextNextStation = stations[currentStationIndex + 1];
+                        const passingTime = calculatePassingTime(fromStation, nextStation, nextNextStation);
+                        
+                        if (passingTime) {
+                            console.log(`${nextStation.name} 通過時刻: ${passingTime}`);
+                            // 必要に応じて通過時刻を表示（デバッグや表示のため）
                         }
                         
                         // わずかな遅延を入れて次の区間へ
