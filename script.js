@@ -803,3 +803,257 @@ document.addEventListener('DOMContentLoaded', function() {
     init();
 });
 
+// 運行開始と時間進行の管理
+let isOperating = false; // 運行中かどうかのフラグ
+let operationTimer = null; // タイマー保持用
+let startTime = null; // 運行開始時間
+let simulationSpeed = 1; // シミュレーション速度倍率（1倍速）
+
+// 運行状態を切り替える関数
+function toggleOperation() {
+    const statusIcon = document.querySelector('.status-icon');
+    const onLabel = document.querySelector('.on-label');
+    const offLabel = document.querySelector('.off-label');
+    
+    isOperating = !isOperating;
+    
+    if (isOperating) {
+        // 運行開始
+        statusIcon.classList.remove('operation-ended');
+        statusIcon.classList.add('operation-started');
+        statusIcon.textContent = '運行中';
+        onLabel.classList.add('active');
+        offLabel.classList.remove('active');
+        startOperation();
+    } else {
+        // 運行終了
+        statusIcon.classList.remove('operation-started');
+        statusIcon.classList.add('operation-ended');
+        statusIcon.textContent = '運行終了';
+        offLabel.classList.add('active');
+        onLabel.classList.remove('active');
+        stopOperation();
+    }
+}
+
+// 運行開始処理
+function startOperation() {
+    // 現在の駅を取得（current クラスが付いている駅）
+    const currentStation = document.querySelector('.station-row.current');
+    if (currentStation) {
+        currentStationIndex = parseInt(currentStation.dataset.stationId);
+    } else {
+        currentStationIndex = 1; // デフォルトは最初の駅
+        const firstStation = document.querySelector('[data-station-id="1"]');
+        if (firstStation) {
+            firstStation.classList.add('current');
+        }
+    }
+    
+    // 現在時刻を開始時間として設定
+    startTime = new Date();
+    
+    // 運行開始、1秒ごとに時間を更新
+    operationTimer = setInterval(updateOperationTime, 1000);
+    
+    // 開始通知
+    showNotification('運行を開始しました', 'success');
+}
+
+// 運行停止処理
+function stopOperation() {
+    if (operationTimer) {
+        clearInterval(operationTimer);
+        operationTimer = null;
+    }
+    
+    // 停止通知
+    showNotification('運行を停止しました', 'info');
+}
+
+// 時間更新処理
+function updateOperationTime() {
+    if (!startTime) return;
+    
+    // 経過時間を計算（ミリ秒）
+    const now = new Date();
+    const elapsedRealTime = now - startTime;
+    
+    // シミュレーション時間を計算（シミュレーション速度を適用）
+    const elapsedSimTime = elapsedRealTime * simulationSpeed;
+    
+    // 次の停車駅と必要な時間を計算
+    const { nextStopStationId, requiredTime } = calculateTimeToNextStop(currentStationIndex);
+    
+    if (nextStopStationId > currentStationIndex) {
+        // 経過した時間が必要時間を超えたら次の駅へ
+        if (elapsedSimTime >= requiredTime) {
+            // 通過駅があれば、それらも含めて移動
+            moveToNextStation(nextStopStationId);
+        }
+        
+        // 進行状況を表示（現在の駅と次の停車駅の間での進行度）
+        updateProgressDisplay(elapsedSimTime, requiredTime);
+    }
+    
+    // 現在時刻表示の更新
+    updateTimeDisplay();
+}
+
+// 次の停車駅と必要な時間を計算する関数
+function calculateTimeToNextStop(fromStationIndex) {
+    let totalRequiredTime = 0;
+    let nextStopStationId = fromStationIndex + 1;
+    let foundStopStation = false;
+    
+    // 次の停車駅を探す
+    while (nextStopStationId <= 22) { // 22は最終駅のID
+        const station = document.querySelector(`.station-row[data-station-id="${nextStopStationId}"]`);
+        
+        if (!station) {
+            nextStopStationId++;
+            continue;
+        }
+        
+        // 通過駅かどうかをチェック
+        const arrivalCell = station.querySelector('.arrival');
+        const departureCell = station.querySelector('.departure');
+        const isPassingStation = 
+            (arrivalCell && arrivalCell.id && arrivalCell.id.startsWith('tuu')) ||
+            (departureCell && departureCell.id && departureCell.id.startsWith('tuu'));
+        
+        // 運転時分を取得
+        const operationTimeElem = station.querySelector('.operation-time');
+        if (operationTimeElem && operationTimeElem.textContent.trim()) {
+            // 所要時間をパース（例: 4<sub>15</sub> -> 4分15秒）
+            let minutes = 0;
+            let seconds = 0;
+            
+            // テキスト内容を解析して分と秒を抽出
+            const mainPart = operationTimeElem.textContent.trim().replace(/<sub>.*<\/sub>/g, '');
+            if (!isNaN(mainPart) && mainPart !== '') {
+                minutes = parseInt(mainPart);
+            }
+            
+            const subMatch = operationTimeElem.innerHTML.match(/<sub>(\d+)<\/sub>/);
+            if (subMatch && subMatch[1]) {
+                seconds = parseInt(subMatch[1]);
+            }
+            
+            // 時間を累積（ミリ秒）
+            totalRequiredTime += (minutes * 60 + seconds) * 1000;
+        }
+        
+        // 通過駅でなければ停車駅として終了
+        if (!isPassingStation) {
+            foundStopStation = true;
+            break;
+        }
+        
+        // 次の駅を確認
+        nextStopStationId++;
+    }
+    
+    // 停車駅が見つからなかった場合（最終駅まで通過駅のみ）は最終駅をセット
+    if (!foundStopStation) {
+        nextStopStationId = 22; // 最終駅ID
+    }
+    
+    return {
+        nextStopStationId,
+        requiredTime: totalRequiredTime
+    };
+}
+
+// 次の駅に移動（通過駅も含める）
+function moveToNextStation(targetStationId = null) {
+    const currentStation = document.querySelector('.station-row.current');
+    if (currentStation) {
+        currentStation.classList.remove('current');
+    }
+    
+    // 目標駅IDが指定されている場合はそこまで移動、なければ次の駅へ
+    const nextStationId = targetStationId || (currentStationIndex + 1);
+    currentStationIndex = nextStationId;
+    
+    const nextStation = document.querySelector(`.station-row[data-station-id="${currentStationIndex}"]`);
+    
+    if (nextStation) {
+        nextStation.classList.add('current');
+        // スクロールして次の駅が見えるようにする
+        nextStation.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // 到着通知
+        const stationName = nextStation.querySelector('.station-name').textContent;
+        showNotification(`${stationName}に到着しました`, 'info');
+        
+        // 通過駅の場合はそれを通知
+        const arrivalCell = nextStation.querySelector('.arrival');
+        const departureCell = nextStation.querySelector('.departure');
+        const isPassingStation = 
+            (arrivalCell && arrivalCell.id && arrivalCell.id.startsWith('tuu')) ||
+            (departureCell && departureCell.id && departureCell.id.startsWith('tuu'));
+        
+        if (isPassingStation) {
+            showNotification(`${stationName}を通過します`, 'info');
+        }
+        
+        // 新しい開始時間を設定
+        startTime = new Date();
+    } else {
+        // 全ての駅に到着した場合、運行を停止
+        toggleOperation();
+    }
+}
+
+// 進行状況の表示を更新
+function updateProgressDisplay(elapsed, required) {
+    // 進行度を計算（0～100%）
+    const progress = Math.min(100, (elapsed / required) * 100);
+    
+    // 進行状況表示（オプション）
+    // ここに進行バーなどの表示更新コードを追加
+}
+
+// 現在時刻表示を更新
+function updateTimeDisplay() {
+    const dateDisplay = document.querySelector('.current-date');
+    if (dateDisplay) {
+        const now = new Date();
+        dateDisplay.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+    }
+}
+
+// 通知を表示する関数
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // 表示アニメーション
+    setTimeout(() => {
+        notification.classList.add('show');
+        
+        // 3秒後に消える
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }, 100);
+}
+
+// イベントリスナーの設定
+document.addEventListener('DOMContentLoaded', function() {
+    // 運行状態切り替えボタン
+    const locationToggle = document.querySelector('.location-toggle');
+    if (locationToggle) {
+        locationToggle.addEventListener('click', toggleOperation);
+    }
+    
+    // その他の初期化処理
+    updateTimeDisplay();
+});
+
