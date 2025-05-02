@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // 駅データ（駅名と時刻情報を含む）
     const stations = [
-        { id: 1, name: '東　京', departure: '15:37', arrival: null, current: true },
+        { id: 1, name: '東　京', departure: '15:37', arrival: null, current: true, isFirst: true },
         { id: 2, name: '新　橋', departure: '15:40', arrival: '15:39:30' },
         { id: 3, name: '品　川', departure: '15:45', arrival: '15:44:30' },
         { id: 4, name: '川　崎', departure: '15:53:45', arrival: '15:53:15' },
@@ -246,6 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (nextStation.passing || !nextStation.departure) {
                         // 最後の駅の場合はアニメーション終了
                         if (nextStation.isLast) {
+                            showContinuationDialog();
                             return;
                         }
                         
@@ -266,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         setTimeout(() => {
                             // 最後の駅の場合はアニメーション終了
                             if (nextStation.isLast) {
+                                showContinuationDialog();
                                 return;
                             }
                             
@@ -279,6 +281,62 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 50); // 滑らかなアニメーションのためにこまめに更新
     }
 
+    // アニメーション終了時に継続確認ダイアログを表示する関数
+    function showContinuationDialog() {
+        // 確認ダイアログの作成
+        const dialogOverlay = document.createElement('div');
+        dialogOverlay.className = 'dialog-overlay';
+        
+        const dialogBox = document.createElement('div');
+        dialogBox.className = 'dialog-box';
+        dialogBox.innerHTML = `
+            <div class="dialog-content">
+                <h3>反復処理を続行しますか?</h3>
+                <div class="dialog-buttons">
+                    <button class="btn btn-yes">はい</button>
+                    <button class="btn btn-no">いいえ</button>
+                </div>
+            </div>
+        `;
+        
+        // ダイアログをDOMに追加
+        dialogOverlay.appendChild(dialogBox);
+        document.body.appendChild(dialogOverlay);
+        
+        // ボタンのイベントリスナーを設定
+        const yesButton = dialogBox.querySelector('.btn-yes');
+        const noButton = dialogBox.querySelector('.btn-no');
+        
+        yesButton.addEventListener('click', function() {
+            // ダイアログを閉じる
+            document.body.removeChild(dialogOverlay);
+            // アニメーションを最初から再開
+            restartAnimation();
+        });
+        
+        noButton.addEventListener('click', function() {
+            // ダイアログを閉じるだけ
+            document.body.removeChild(dialogOverlay);
+        });
+    }
+
+    // アニメーションを最初から再開する関数
+    function restartAnimation() {
+        // 初期状態にリセット
+        resetDisplay();
+        // ONラベルをアクティブに
+        const onLabel = document.querySelector('.on-label');
+        const offLabel = document.querySelector('.off-label');
+        onLabel.classList.add('active');
+        offLabel.classList.remove('active');
+        // アニメーション開始
+        setTimeout(() => {
+            locationType = 'between-stations';
+            betweenStationsProgress = 0;
+            animateBetweenStations(currentStationIndex);
+        }, 1000);
+    }
+
     // アニメーションを開始する
     function startAnimation() {
         // 既存のアニメーションがあれば停止
@@ -287,7 +345,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // 初期状態をリセット
         resetDisplay();
         
-        // 最初の駅からアニメーション開始
+        // 現在の始発駅のインデックスを取得
+        currentStationIndex = stations.findIndex(station => station.isFirst);
+        if (currentStationIndex === -1) {
+            currentStationIndex = 0; // 始発駅が見つからない場合は東京駅から
+        }
+        
+        // アニメーション開始
         setTimeout(() => {
             locationType = 'between-stations';
             betweenStationsProgress = 0;
@@ -321,7 +385,10 @@ document.addEventListener('DOMContentLoaded', function() {
         cleanupDisplay();
         
         // 現在の状態をリセット
-        currentStationIndex = 0; // 東京に戻す
+        currentStationIndex = stations.findIndex(station => station.isFirst);
+        if (currentStationIndex === -1) {
+            currentStationIndex = 0; // 始発駅が見つからない場合は東京駅から
+        }
         locationType = 'at-station';
         passedStations = []; // 通過した駅のリストをクリア
         
@@ -343,8 +410,225 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 駅の表示を更新する関数
+    function updateStationsVisibility() {
+        let terminalFound = false;
+        let firstStationFound = false;
+        
+        // 駅の表示/非表示を設定
+        stations.forEach(station => {
+            const stationRow = document.querySelector(`.station-row[data-station-id="${station.id}"]`);
+            if (stationRow) {
+                // 始発駅より前は非表示
+                if (!firstStationFound) {
+                    if (station.isFirst) {
+                        firstStationFound = true;
+                        stationRow.style.display = '';
+                    } else {
+                        stationRow.style.display = 'none';
+                    }
+                }
+                // 終着駅より後は非表示
+                else if (terminalFound) {
+                    stationRow.style.display = 'none';
+                } else {
+                    stationRow.style.display = '';
+                }
+                
+                if (station.isLast) {
+                    terminalFound = true;
+                }
+            }
+        });
+    }
+
+    // 終着駅を設定する関数
+    function setTerminalStation(stationId) {
+        const newTerminal = stations.find(s => s.id === stationId);
+        if (!newTerminal) return;
+
+        if (newTerminal.isLast) {
+            // すでに終着駅の場合は解除
+            newTerminal.isLast = false;
+            const stationRow = document.querySelector(`.station-row[data-station-id="${stationId}"]`);
+            if (stationRow) {
+                const departureCell = stationRow.querySelector('.departure');
+                if (departureCell) {
+                    // 元の発時刻を復元
+                    if (newTerminal.departure) {
+                        // HTML要素として設定
+                        if (newTerminal.departure.split(':')[2]) {
+                            departureCell.innerHTML = newTerminal.departure.split(':')[1] + '<sub>' + newTerminal.departure.split(':')[2] + '</sub>';
+                        } else {
+                            departureCell.innerHTML = newTerminal.departure.split(':')[1];
+                        }
+                    } else if (!newTerminal.passing) {
+                        departureCell.innerHTML = '';
+                    }
+                }
+            }
+            // 熱海を終着駅に戻す
+            const lastStation = stations.find(s => s.id === 22);
+            if (lastStation) {
+                lastStation.isLast = true;
+                const lastStationRow = document.querySelector(`.station-row[data-station-id="22"]`);
+                if (lastStationRow) {
+                    const departureCell = lastStationRow.querySelector('.departure');
+                    if (departureCell) {
+                        departureCell.innerHTML = '====';
+                    }
+                }
+            }
+        } else {
+            // すべての駅の終着表示をリセット
+            stations.forEach(station => {
+                station.isLast = false;
+                const stationRow = document.querySelector(`.station-row[data-station-id="${station.id}"]`);
+                if (stationRow) {
+                    const departureCell = stationRow.querySelector('.departure');
+                    if (departureCell) {
+                        // 元の発時刻を復元
+                        if (station.departure) {
+                            // HTML要素として設定
+                            if (station.departure.split(':')[2]) {
+                                departureCell.innerHTML = station.departure.split(':')[1] + '<sub>' + station.departure.split(':')[2] + '</sub>';
+                            } else {
+                                departureCell.innerHTML = station.departure.split(':')[1];
+                            }
+                        } else if (!station.passing) {
+                            departureCell.innerHTML = '';
+                        }
+                    }
+                }
+            });
+
+            // 新しい終着駅を設定
+            newTerminal.isLast = true;
+            // 終着駅の発時刻を "====" に変更
+            const stationRow = document.querySelector(`.station-row[data-station-id="${stationId}"]`);
+            if (stationRow) {
+                const departureCell = stationRow.querySelector('.departure');
+                if (departureCell) {
+                    departureCell.innerHTML = '====';
+                }
+            }
+        }
+
+        // 終着駅以降の駅の表示を更新
+        updateStationsVisibility();
+    }
+
+    // 始発駅を設定する関数
+    function setFirstStation(stationId) {
+        const newFirst = stations.find(s => s.id === stationId);
+        if (!newFirst) return;
+
+        if (newFirst.isFirst) {
+            // すでに始発駅の場合は解除
+            newFirst.isFirst = false;
+            const stationRow = document.querySelector(`.station-row[data-station-id="${stationId}"]`);
+            if (stationRow) {
+                const arrivalCell = stationRow.querySelector('.arrival');
+                if (arrivalCell) {
+                    // 到着時刻を復元
+                    if (newFirst.arrival) {
+                        if (newFirst.arrival.split(':')[2]) {
+                            arrivalCell.innerHTML = newFirst.arrival.split(':')[1] + '<sub>' + newFirst.arrival.split(':')[2] + '</sub>';
+                        } else {
+                            arrivalCell.innerHTML = newFirst.arrival.split(':')[1];
+                        }
+                    } else if (!newFirst.passing) {
+                        arrivalCell.innerHTML = '';
+                    }
+                }
+            }
+            // 東京駅を始発駅に戻す
+            const firstStation = stations.find(s => s.id === 1);
+            if (firstStation) {
+                firstStation.isFirst = true;
+                const firstStationRow = document.querySelector(`.station-row[data-station-id="1"]`);
+                if (firstStationRow) {
+                    const arrivalCell = firstStationRow.querySelector('.arrival');
+                    if (arrivalCell) {
+                        arrivalCell.innerHTML = '';
+                    }
+                }
+            }
+        } else {
+            // すべての駅の始発表示をリセット
+            stations.forEach(station => {
+                station.isFirst = false;
+                const stationRow = document.querySelector(`.station-row[data-station-id="${station.id}"]`);
+                if (stationRow) {
+                    const arrivalCell = stationRow.querySelector('.arrival');
+                    if (arrivalCell) {
+                        // 到着時刻を復元
+                        if (station.arrival) {
+                            if (station.arrival.split(':')[2]) {
+                                arrivalCell.innerHTML = station.arrival.split(':')[1] + '<sub>' + station.arrival.split(':')[2] + '</sub>';
+                            } else {
+                                arrivalCell.innerHTML = station.arrival.split(':')[1];
+                            }
+                        } else if (!station.passing) {
+                            arrivalCell.innerHTML = '';
+                        }
+                    }
+                }
+            });
+
+            // 新しい始発駅を設定
+            newFirst.isFirst = true;
+            // 始発駅の到着時刻を空に
+            const stationRow = document.querySelector(`.station-row[data-station-id="${stationId}"]`);
+            if (stationRow) {
+                const arrivalCell = stationRow.querySelector('.arrival');
+                if (arrivalCell) {
+                    arrivalCell.innerHTML = '';
+                }
+            }
+        }
+
+        // 駅の表示を更新
+        updateStationsVisibility();
+    }
+
+    // 駅のクリックイベントを設定
+    document.querySelectorAll('.station-row').forEach(row => {
+        const arrivalCell = row.querySelector('.arrival');
+        const departureCell = row.querySelector('.departure');
+        
+        if (arrivalCell) {
+            arrivalCell.addEventListener('click', function(e) {
+                e.stopPropagation(); // イベントの伝播を止める
+                const stationId = parseInt(row.dataset.stationId);
+                const station = stations.find(s => s.id === stationId);
+                
+                // 通過駅でない場合のみ始発駅として設定可能
+                if (station && !station.passing) {
+                    setFirstStation(stationId);
+                }
+            });
+        }
+        
+        if (departureCell) {
+            departureCell.addEventListener('click', function(e) {
+                e.stopPropagation(); // イベントの伝播を止める
+                const stationId = parseInt(row.dataset.stationId);
+                const station = stations.find(s => s.id === stationId);
+                
+                // 通過駅でない場合のみ終着駅として設定可能
+                if (station && !station.passing) {
+                    setTerminalStation(stationId);
+                }
+            });
+        }
+    });
+
     // 初期表示を設定
     updateCurrentLocation();
+
+    // 初期表示時にも終着駅以降の駅の表示を更新
+    updateStationsVisibility();
 
     // アプリケーションの初期化
     function init() {
