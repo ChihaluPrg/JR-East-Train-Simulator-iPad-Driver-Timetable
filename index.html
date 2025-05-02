@@ -1,352 +1,418 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JR東日本 運転士用時刻表</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* 認証成功通知のスタイル */
+      .auth-success-notification {
+        position: fixed;
+        top: -60px; /* 初期位置（画面外） */
+        left: 0;
+        width: 100%;
+        background-color: rgba(0, 117, 194, 0.9);
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        z-index: 1000;
+        opacity: 0;
+        transition: top 0.5s ease, opacity 0.5s ease;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+      
+      .auth-success-notification.show {
+        top: 0;
+        opacity: 1;
+      }
+    </style>
+    <script>
+      // ログイン状態チェック
+      document.addEventListener("DOMContentLoaded", function () {
+        const isLoggedIn = localStorage.getItem("isLoggedIn");
+        if (!isLoggedIn || isLoggedIn !== "true") {
+          // 未ログインの場合、ログインページへリダイレクト
+          window.location.href = "login.html";
+        } else {
+          // 認証成功フラグのチェック
+          const authSuccess = localStorage.getItem("authSuccess");
+          if (authSuccess === "true") {
+            // 認証成功通知を表示
+            showAuthSuccessNotification();
+            // フラグをクリア（次回リロード時に表示されないように）
+            localStorage.removeItem("authSuccess");
+          }
+        }
+      });
+
+      // 認証成功通知を表示する関数
+      function showAuthSuccessNotification() {
+        // 通知要素を作成
+        const notification = document.createElement("div");
+        notification.className = "auth-success-notification";
+        notification.textContent = "認証が成功しました";
+        document.body.appendChild(notification);
+        
+        // 少し遅延させて表示（DOMに追加後にトランジションを適用するため）
+        setTimeout(() => {
+          notification.classList.add("show");
+          
+          // 2秒後に非表示
+          setTimeout(() => {
+            notification.classList.remove("show");
+            
+            // トランジション完了後に要素を削除
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 600);
+          }, 2000);
+        }, 100);
+      }
+    </script>
+  </head>
+  <body>
     <div class="app-container">
-        <!-- ヘッダー部分 -->
-        <header>
-            <div class="menu-button">
-                <div class="hamburger-menu"></div>
-            </div>
-            <h1>平日3行路</h1>
-            <div class="dark-mode-toggle">
-                <div class="moon-icon"></div>
-            </div>
-        </header>
+      <!-- ヘッダー部分 -->
+      <header>
+        <div class="menu-button">
+          <div class="hamburger-menu"></div>
+        </div>
+        <h1>平日3行路</h1>
+        <div class="dark-mode-toggle">
+          <div class="moon-icon"></div>
+        </div>
+      </header>
 
-        <!-- メニュー部分 -->
-        <nav class="main-nav">
-            <ul>
-                <li class="nav-item">ハ　コ</li>
-                <li class="nav-item active">時刻表</li>
-                <li class="nav-item">行路添付</li>
-            </ul>
-        </nav>
+      <!-- メニュー部分 -->
+      <nav class="main-nav">
+        <ul>
+          <li class="nav-item">ハ　コ</li>
+          <li class="nav-item active">時刻表</li>
+          <li class="nav-item">行路添付</li>
+        </ul>
+      </nav>
 
-        <!-- 路線情報部分 -->
-        <div class="route-info">
-            <div class="date-info">
-                <div>行路施行日</div>
-                <div class="current-date">2024年8月10日</div>
-            </div>
-            <div class="operation-status">
-                <div class="status-icon operation-ended">運行終了</div>
-                <div class="location-toggle">
-                    <span class="on-label">ON</span>
-                    <span class="off-label active">OFF</span>
-                </div>
-                <div class="dropdown-arrow"></div>
-            </div>
+      <!-- 路線情報部分 -->
+      <div class="route-info">
+        <div class="date-info">
+          <div>行路施行日</div>
+          <div class="current-date">2024年8月10日</div>
+        </div>
+        <div class="operation-status">
+          <div class="status-icon operation-ended">運行終了</div>
+          <div class="location-toggle">
+            <span class="on-label">ON</span>
+            <span class="off-label active">OFF</span>
+          </div>
+          <div class="dropdown-arrow"></div>
+        </div>
+      </div>
+
+      <!-- 列車情報ヘッダー -->
+      <div class="train-info-header">
+        <div class="column train-number">列　車</div>
+        <div class="column max-speed">最高速度<br />(Km/h)</div>
+        <div class="column speed-type">速度種別</div>
+        <div class="column train-cars">けん引定数</div>
+      </div>
+
+      <!-- 列車情報値 -->
+      <div class="train-info-values">
+        <div class="column train-number">
+          <span class="number blue">3</span>
+          <span class="number blue">5</span>
+          <span class="number blue">3</span>
+          <span class="number blue">5</span>
+          <span class="letter blue">E</span>
+        </div>
+        <div class="column max-speed">
+          <div></div>
+        </div>
+        <div class="column speed-type">
+          <div>通電A21</div>
+        </div>
+        <div class="column train-cars">
+          <div>E233系</div>
+          <div>8M7T</div>
+        </div>
+      </div>
+
+      <div class="train-cars-count">
+        <div class="count">15</div>
+        <div class="unit">両</div>
+        <div class="note">(快速 アクティー)</div>
+        <div class="additional-info"></div>
+      </div>
+
+      <!-- 時刻表ヘッダー -->
+      <div class="timetable-header">
+        <div class="column operation-time">運転<br />時分</div>
+        <div class="column station-name">停車場名</div>
+        <div class="column arrival">着</div>
+        <div class="column departure">発 (通)</div>
+        <div class="column track-info">着線<br />発線</div>
+        <div class="column speed-limit">制限<br />速度</div>
+        <div class="column remarks">記事</div>
+        <div class="column marker">マーカー</div>
+      </div>
+
+      <!-- 時刻表本体 -->
+      <div class="timetable-container">
+        <div class="station-row current" data-station-id="1">
+          <div class="column operation-time"></div>
+          <div class="column station-name">東　京</div>
+          <div class="column arrival"></div>
+          <div class="column departure">15.37</div>
+          <div class="column track-info"><s>10</s></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks" id="red">発線9変</div>
+          <div class="column marker"></div>
+          <div class="current-location"></div>
         </div>
 
-        <!-- 列車情報ヘッダー -->
-        <div class="train-info-header">
-            <div class="column train-number">列　車</div>
-            <div class="column max-speed">最高速度<br>(Km/h)</div>
-            <div class="column speed-type">速度種別</div>
-            <div class="column train-cars">けん引定数</div>
+        <div class="station-row" data-station-id="2">
+          <div class="column operation-time">2<sub>30</sub></div>
+          <div class="column station-name">新　橋</div>
+          <div class="column arrival">39<sub>30</sub></div>
+          <div class="column departure">40</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
         </div>
 
-        <!-- 列車情報値 -->
-        <div class="train-info-values">
-            <div class="column train-number">
-                <span class="number blue">3</span>
-                <span class="number blue">5</span>
-                <span class="number blue">3</span>
-                <span class="number blue">5</span>
-                <span class="letter blue">E</span>
-            </div>
-            <div class="column max-speed">
-                <div></div>
-            </div>
-            <div class="column speed-type">
-                <div>通電A21</div>
-            </div>
-            <div class="column train-cars">
-                <div>E233系</div>
-                <div>8M7T</div>
-            </div>
+        <div class="station-row" data-station-id="3">
+          <div class="column operation-time">4<sub>30</sub></div>
+          <div class="column station-name">品　川</div>
+          <div class="column arrival">15.44<sub>30</sub></div>
+          <div class="column departure">15.45</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
         </div>
 
-        <div class="train-cars-count">
-            <div class="count">15</div>
-            <div class="unit">両</div>
-            <div class="note">(快速 アクティー)</div>
-            <div class="additional-info"></div>
+        <div class="station-row" data-station-id="4">
+          <div class="column operation-time">8<sub>15</sub></div>
+          <div class="column station-name">川　崎</div>
+          <div class="column arrival">53<sub>15</sub></div>
+          <div class="column departure">53<sub>45</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
         </div>
 
-        <!-- 時刻表ヘッダー -->
-        <div class="timetable-header">
-            <div class="column operation-time">運転<br>時分</div>
-            <div class="column station-name">停車場名</div>
-            <div class="column arrival">着</div>
-            <div class="column departure">発 (通)</div>
-            <div class="column track-info">着線<br>発線</div>
-            <div class="column speed-limit">制限<br>速度</div>
-            <div class="column remarks">記事</div>
-            <div class="column marker">マーカー</div>
+        <div class="station-row" data-station-id="5">
+          <div class="column operation-time">2<sub>30</sub></div>
+          <div class="column station-name">鶴　見</div>
+          <div class="column arrival" id="tuu">↓</div>
+          <div class="column departure">56<sub>15</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
         </div>
 
-        <!-- 時刻表本体 -->
-        <div class="timetable-container">
-            <div class="station-row current" data-station-id="1">
-                <div class="column operation-time"></div>
-                <div class="column station-name">東　京</div>
-                <div class="column arrival"></div>
-                <div class="column departure">15.37</div>
-                <div class="column track-info"><s>10</s></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks" id="red">発線9変</div>
-                <div class="column marker"></div>
-                <div class="current-location"></div>
-            </div>
-
-            <div class="station-row" data-station-id="2">
-                <div class="column operation-time">2<sub>30</sub></div>
-                <div class="column station-name">新　橋</div>
-                <div class="column arrival">39<sub>30</sub></div>
-                <div class="column departure">40</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="3">
-                <div class="column operation-time">4<sub>30</sub></div>
-                <div class="column station-name">品　川</div>
-                <div class="column arrival">15.44<sub>30</sub></div>
-                <div class="column departure">15.45</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="4">
-                <div class="column operation-time">8<sub>15</sub></div>
-                <div class="column station-name">川　崎</div>
-                <div class="column arrival">53<sub>15</sub></div>
-                <div class="column departure">53<sub>45</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="5">
-                <div class="column operation-time">2<sub>30</sub></div>
-                <div class="column station-name">鶴　見</div>
-                <div class="column arrival" id="tuu">↓</div>
-                <div class="column departure">56<sub>15</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="6">
-                <div class="column operation-time">5</div>
-                <div class="column station-name">横　浜</div>
-                <div class="column arrival">16.01<sub>15</sub></div>
-                <div class="column departure">16.02<sub>15</sub></div>
-                <div class="column track-info">6</div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="7">
-                <div class="column operation-time">9<sub>15</sub></div>
-                <div class="column station-name">戸　塚</div>
-                <div class="column arrival">11<sub>30</sub></div>
-                <div class="column departure">12<sub>15</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="8">
-                <div class="column operation-time">4<sub>45</sub></div>
-                <div class="column station-name">大　船</div>
-                <div class="column arrival">16.17</div>
-                <div class="column departure">16.17<sub>30</sub></div>
-                <div class="column track-info">3</div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="9">
-                <div class="column operation-time">4</div>
-                <div class="column station-name">藤　沢</div>
-                <div class="column arrival">21<sub>30</sub></div>
-                <div class="column departure">22</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="10">
-                <div class="column operation-time">5</div>
-                <div class="column station-name">辻　堂</div>
-                <div class="column arrival"  id="tuu2">↓</div>
-                <div class="column departure" id="tuu3">↓</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="11">
-                <div class="column operation-time">4<sub>15</sub></div>
-                <div class="column station-name">茅ヶ崎</div>
-                <div class="column arrival">27</div>
-                <div class="column departure">27<sub>30</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="12">
-                <div class="column operation-time"></div>
-                <div class="column station-name">平　塚</div>
-                <div class="column arrival">16.31<sub>45</sub></div>
-                <div class="column departure">16.32<sub>15</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="13">
-                <div class="column operation-time"></div>
-                <div class="column station-name">大　磯</div>
-                <div class="column arrival" id="tuu4">↓</div>
-                <div class="column departure" id="tuu5">↓</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="14">
-                <div class="column operation-time">8<sub>45</sub></div>
-                <div class="column station-name">二　宮</div>
-                <div class="column arrival" id="tuu6">↓</div>
-                <div class="column departure" id="tuu7">↓</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="15">
-                <div class="column operation-time"></div>
-                <div class="column station-name">国府津</div>
-                <div class="column arrival">16.41</div>
-                <div class="column departure">16.42</div>
-                <div class="column track-info">1</div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="16">
-                <div class="column operation-time">5</div>
-                <div class="column station-name">鴨　宮</div>
-                <div class="column arrival"  id="tuu8">↓</div>
-                <div class="column departure" id="tuu9">↓</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="17">
-                <div class="column operation-time">2<sub>15</sub></div>
-                <div class="column station-name">小田原</div>
-                <div class="column arrival">16.47</div>
-                <div class="column departure">16.48</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="18">
-                <div class="column operation-time">4<sub>15</sub></div>
-                <div class="column station-name">早　川</div>
-                <div class="column arrival">50<sub>15</sub></div>
-                <div class="column departure">50<sub>45</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="19">
-                <div class="column operation-time">4<sub>45</sub></div>
-                <div class="column station-name">根府川</div>
-                <div class="column arrival">55</div>
-                <div class="column departure">55<sub>30</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="20">
-                <div class="column operation-time">3<sub>15</sub></div>
-                <div class="column station-name">真　鶴</div>
-                <div class="column arrival">17.00<sub>15</sub></div>
-                <div class="column departure">00<sub>45</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="21">
-                <div class="column operation-time">6<sub>30</sub></div>
-                <div class="column station-name">湯河原</div>
-                <div class="column arrival">04</div>
-                <div class="column departure">04<sub>30</sub></div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks"></div>
-                <div class="column marker"></div>
-            </div>
-
-            <div class="station-row" data-station-id="22">
-                <div class="column operation-time"></div>
-                <div class="column station-name">熱　海</div>
-                <div class="column arrival">17.11</div>
-                <div class="column departure">====</div>
-                <div class="column track-info"></div>
-                <div class="column speed-limit"></div>
-                <div class="column remarks">下本</div>
-                <div class="column marker"></div>
-            </div>
+        <div class="station-row" data-station-id="6">
+          <div class="column operation-time">5</div>
+          <div class="column station-name">横　浜</div>
+          <div class="column arrival">16.01<sub>15</sub></div>
+          <div class="column departure">16.02<sub>15</sub></div>
+          <div class="column track-info">6</div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
         </div>
 
-        <!-- 現在位置表示用のオーバーレイ -->
-        <div class="current-location-overlay"></div>
+        <div class="station-row" data-station-id="7">
+          <div class="column operation-time">9<sub>15</sub></div>
+          <div class="column station-name">戸　塚</div>
+          <div class="column arrival">11<sub>30</sub></div>
+          <div class="column departure">12<sub>15</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
 
-        <!-- 注意事項フッター -->
-        <footer>
-            <div class="notice-header">注 意 事 項</div>
-        </footer>
+        <div class="station-row" data-station-id="8">
+          <div class="column operation-time">4<sub>45</sub></div>
+          <div class="column station-name">大　船</div>
+          <div class="column arrival">16.17</div>
+          <div class="column departure">16.17<sub>30</sub></div>
+          <div class="column track-info">3</div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="9">
+          <div class="column operation-time">4</div>
+          <div class="column station-name">藤　沢</div>
+          <div class="column arrival">21<sub>30</sub></div>
+          <div class="column departure">22</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="10">
+          <div class="column operation-time">5</div>
+          <div class="column station-name">辻　堂</div>
+          <div class="column arrival" id="tuu2">↓</div>
+          <div class="column departure" id="tuu3">↓</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="11">
+          <div class="column operation-time">4<sub>15</sub></div>
+          <div class="column station-name">茅ヶ崎</div>
+          <div class="column arrival">27</div>
+          <div class="column departure">27<sub>30</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="12">
+          <div class="column operation-time"></div>
+          <div class="column station-name">平　塚</div>
+          <div class="column arrival">16.31<sub>45</sub></div>
+          <div class="column departure">16.32<sub>15</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="13">
+          <div class="column operation-time"></div>
+          <div class="column station-name">大　磯</div>
+          <div class="column arrival" id="tuu4">↓</div>
+          <div class="column departure" id="tuu5">↓</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="14">
+          <div class="column operation-time">8<sub>45</sub></div>
+          <div class="column station-name">二　宮</div>
+          <div class="column arrival" id="tuu6">↓</div>
+          <div class="column departure" id="tuu7">↓</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="15">
+          <div class="column operation-time"></div>
+          <div class="column station-name">国府津</div>
+          <div class="column arrival">16.41</div>
+          <div class="column departure">16.42</div>
+          <div class="column track-info">1</div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="16">
+          <div class="column operation-time">5</div>
+          <div class="column station-name">鴨　宮</div>
+          <div class="column arrival" id="tuu8">↓</div>
+          <div class="column departure" id="tuu9">↓</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="17">
+          <div class="column operation-time">2<sub>15</sub></div>
+          <div class="column station-name">小田原</div>
+          <div class="column arrival">16.47</div>
+          <div class="column departure">16.48</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="18">
+          <div class="column operation-time">4<sub>15</sub></div>
+          <div class="column station-name">早　川</div>
+          <div class="column arrival">50<sub>15</sub></div>
+          <div class="column departure">50<sub>45</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="19">
+          <div class="column operation-time">4<sub>45</sub></div>
+          <div class="column station-name">根府川</div>
+          <div class="column arrival">55</div>
+          <div class="column departure">55<sub>30</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="20">
+          <div class="column operation-time">3<sub>15</sub></div>
+          <div class="column station-name">真　鶴</div>
+          <div class="column arrival">17.00<sub>15</sub></div>
+          <div class="column departure">00<sub>45</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="21">
+          <div class="column operation-time">6<sub>30</sub></div>
+          <div class="column station-name">湯河原</div>
+          <div class="column arrival">04</div>
+          <div class="column departure">04<sub>30</sub></div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks"></div>
+          <div class="column marker"></div>
+        </div>
+
+        <div class="station-row" data-station-id="22">
+          <div class="column operation-time"></div>
+          <div class="column station-name">熱　海</div>
+          <div class="column arrival">17.11</div>
+          <div class="column departure">====</div>
+          <div class="column track-info"></div>
+          <div class="column speed-limit"></div>
+          <div class="column remarks">下本</div>
+          <div class="column marker"></div>
+        </div>
+      </div>
+
+      <!-- 現在位置表示用のオーバーレイ -->
+      <div class="current-location-overlay"></div>
+
+      <!-- 注意事項フッター -->
+      <footer>
+        <div class="notice-header">注 意 事 項</div>
+      </footer>
     </div>
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
-

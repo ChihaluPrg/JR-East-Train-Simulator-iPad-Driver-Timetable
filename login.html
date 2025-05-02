@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JR東日本 運転士用時刻表 - ログイン</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        background-color: #f0f0f0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .login-container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 30px;
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+      }
+
+      .logo {
+        width: 350px; /* ロゴサイズを150pxから250pxに拡大 */
+        margin-bottom: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+
+      label {
+        display: block;
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 5px;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+
+      input:focus {
+        border-color: #0075c2;
+        outline: none;
+      }
+
+      .login-btn {
+        background-color: #0075c2;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 12px 0;
+        width: 100%;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .login-btn:hover {
+        background-color: #005a94;
+      }
+
+      .error-message {
+        color: #e74c3c;
+        margin-bottom: 15px;
+        font-size: 14px;
+        display: none;
+      }
+
+      .app-title {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 20px;
+        font-weight: bold;
+      }
+
+      @media (max-width: 768px) {
+        .login-container {
+          width: 95%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <img src="logo.png" alt="JR東日本ロゴ" class="logo" />
+
+      <div id="error-message" class="error-message">
+        ユーザー名またはパスワードが正しくありません。
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">社員番号</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="社員番号を入力"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">パスワード</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="パスワードを入力"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="train-number">列番</label>
+          <input
+            type="text"
+            id="train-number"
+            name="train-number"
+            placeholder="列番を入力"
+            required
+          />
+        </div>
+
+        <button type="submit" class="login-btn">認証</button>
+      </form>
+    </div>
+
+    <script>
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+          const trainNumber = document.getElementById("train-number").value;
+
+          // ここでは簡易的な認証を実装（実際の環境ではサーバーサイドで実装すべき）
+          if (
+            username === "123" &&
+            password === "123" &&
+            trainNumber === "3535E"
+          ) {
+            // 認証成功、時刻表ページへリダイレクト
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("trainNumber", trainNumber); // 列番も保存
+            localStorage.setItem("authSuccess", "true"); // 認証成功フラグを設定
+            window.location.href = "index.html";
+          } else {
+            // 認証失敗、エラーメッセージを表示
+            document.getElementById("error-message").style.display = "block";
+          }
+        });
+    </script>
+  </body>
+</html>
