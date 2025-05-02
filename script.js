@@ -350,6 +350,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentStationIndex === -1) {
             currentStationIndex = 0; // 始発駅が見つからない場合は東京駅から
         }
+
+        // 始発駅より前の駅を通過済みとして記録
+        for (let i = 0; i < currentStationIndex; i++) {
+            passedStations.push(stations[i].id);
+            const stationRow = document.querySelector(`.station-row[data-station-id="${stations[i].id}"]`);
+            if (stationRow) {
+                stationRow.classList.add('passed');
+            }
+        }
+        
+        // 位置を更新して表示
+        updateCurrentLocation();
         
         // アニメーション開始
         setTimeout(() => {
@@ -387,10 +399,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // 現在の状態をリセット
         currentStationIndex = stations.findIndex(station => station.isFirst);
         if (currentStationIndex === -1) {
-            currentStationIndex = 0; // 始発駅が見つからない場合は東京駅から
+            currentStationIndex = 0;
         }
         locationType = 'at-station';
         passedStations = []; // 通過した駅のリストをクリア
+        
+        // 始発駅より前の駅は通過済みとして記録
+        for (let i = 0; i < currentStationIndex; i++) {
+            passedStations.push(stations[i].id);
+            const stationRow = document.querySelector(`.station-row[data-station-id="${stations[i].id}"]`);
+            if (stationRow) {
+                stationRow.classList.add('passed');
+            }
+        }
         
         // 初期表示を設定
         updateCurrentLocation();
